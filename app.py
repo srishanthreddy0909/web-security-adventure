@@ -303,9 +303,17 @@ def admin():
 def reset(uid):
     with db() as s:
         s.query(Progress).filter(Progress.user_id==uid).delete(synchronize_session=False); s.commit(); ensure_progress(s,uid)
-    flash('Player progress reset.','ok'); return redirect(url_for('admin'))
+    flash('Player progress reset.','ok');
+    return redirect(url_for('admin'))
 
-if __name__=='__main__':
+
+@app.get("/loaderio-d5b0667fd9904cf583d29163f99dfaf7.txt")
+def loaderio_verification():
+    return "loaderio-d5b0667fd9904cf583d29163f99dfaf7", 200, {
+        "Content-Type": "text/plain"
+    }
+
+if __name__== '__main__':
     print('Web Security Adventure running locally.')
     print('Database:', DATABASE_URL.split('@')[-1])
     print('Admin room: /ops-room-7c4f')
