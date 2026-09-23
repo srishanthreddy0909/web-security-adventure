@@ -1,3 +1,4 @@
+	
 import os, base64, secrets
 from datetime import datetime
 from functools import wraps
@@ -245,7 +246,6 @@ def m2():
     resp=make_response(jsonify(message='Cookie delivered. Please do not eat the DevTools.',cookie_name='training_cookie',note='Inspect browser storage.'))
     resp.set_cookie('training_cookie',encoded,httponly=False,secure=request.is_secure,samesite='Lax')
     return resp
-
 @app.route('/lab/mission3/login', methods=['POST'])
 @need
 def m3():
@@ -255,31 +255,240 @@ def m3():
         lesson='Authentication established an identity for this session.',
         clue='Identity confirmed. Now ask: what proves who you are?'
     )
+
+
+@app.route('/lab/mission3/answer', methods=['POST'])
+@need
+def m3_answer():
+    data = request.get_json(silent=True) or {}
+    answer = str(data.get('answer', '')).strip().lower()
+
+    if answer == 'identity':
+        encoded = base64.b64encode(FLAGS[3].encode()).decode()
+        return jsonify(
+            success=True,
+            correct=True,
+            evidence=encoded,
+            encoding='base64',
+            message='Correct. Authentication establishes identity.'
+        )
+
+    return jsonify(
+        success=True,
+        correct=False,
+        message='Not quite. Ask yourself: what does authentication establish?'
+    )
+
 @app.route('/lab/mission4/locker/<int:object_id>')
 @need
 def m4(object_id):
-    records={101:{'owner':'alex','item':'Mystery USB','message':'Please return this to Alex.'},202:{'owner':'riley','item':'Pizza voucher','message':'Riley says this is NOT yours.'}}
-    rec=records.get(object_id)
-    if not rec:return jsonify(error='Locker not found'),404
-    return jsonify(locker=object_id,record=rec,lesson='Teaching scenario: the server returned the record because the object ID was accepted. Ask whether ownership was checked.')
+    records = {
+        101: {
+            'owner': 'alex',
+            'item': 'Mystery USB',
+            'message': 'Please return this to Alex.'
+        },
+        202: {
+            'owner': 'riley',
+            'item': 'Pizza voucher',
+            'message': 'Riley says this is NOT yours.'
+        }
+    }
 
+    rec = records.get(object_id)
+
+    if not rec:
+        return jsonify(error='Locker not found'), 404
+
+    if object_id == 202:
+        encoded = base64.b64encode(FLAGS[4].encode()).decode()
+
+        return jsonify(
+            locker=object_id,
+            record=rec,
+            evidence=encoded,
+            encoding='base64',
+            lesson='The server returned another user’s fictional record because the object ID was accepted without an ownership check.'
+        )
+
+    return jsonify(
+        locker=object_id,
+        record=rec,
+        lesson='Start here. This is Alex’s fictional locker. Now ask whether changing the object ID should let you see another user’s record.'
+    )
+@app.route('/lab/mission5/bingo/<path:category>')
+@need
+def m5(category):
+    category = category.strip().lower()
+
+    explanations = {
+        'broken-access-control':
+            'Who can access what? The locker investigation showed an object was returned without checking ownership.',
+        'injection':
+            'Can input change how an interpreter behaves?',
+        'xss':
+            'Can untrusted content become browser code?',
+        'authentication-failures':
+            'Can the app reliably establish identity?',
+        'security-misconfiguration':
+            'Are security controls configured safely?',
+        'csrf':
+            'What proves a state-changing request was intentional?'
+    }
+
+    explanation = explanations.get(
+        category,
+        'That category is not part of this investigation.'
+    )
+
+    if category == 'broken-access-control':
+        encoded = base64.b64encode(FLAGS[5].encode()).decode()
+
+        return jsonify(
+            correct=True,
+            evidence=encoded,
+            encoding='base64',
+            message='Correct. The locker behavior was a Broken Access Control problem.',
+            explanation=explanation
+        )
+
+    return jsonify(
+        correct=False,
+        message='Good category to know, but it does not match the locker investigation.',
+        explanation=explanation
+    )
 @app.route('/lab/mission6/search')
 @need
 def m6():
-    q=request.args.get('q',''); interesting=any(x in q.lower() for x in ["' or ","' or ",'--','union','select'])
-    return jsonify(query=q,simulated_result=('Whoa. That input looks like it is trying to become SQL syntax. In a real application, parameterized queries keep it as data.' if interesting else '0 results. Baseline recorded.'),training=True)
+    q = request.args.get('q', '')
+
+    interesting = any(
+        x in q.lower()
+        for x in ["' or ", "' or ", "--", "union", "select"]
+    )
+
+    if interesting:
+        encoded = base64.b64encode(FLAGS[6].encode()).decode()
+
+        return jsonify(
+            query=q,
+            simulated_result='Whoa. That input looks like it is trying to become SQL syntax.',
+            evidence=encoded,
+            encoding='base64',
+            lesson='In a real application, parameterized queries keep user input as data instead of allowing it to alter SQL syntax.'
+        )
+
+    return jsonify(
+        query=q,
+        simulated_result='0 results. Baseline recorded.',
+        training=True
+    )
 
 @app.route('/lab/mission7/comment',methods=['POST'])
 @need
 def m7():
     text=request.form.get('text','')
-    return jsonify(stored=text,rendered_as_text=True,lesson='Training mode keeps the submission safe. In a real vulnerable renderer, untrusted HTML could become executable browser content.')
+    html_like='<' in text and '>' in text
+    if html_like:
+        return jsonify(
+            stored=text,
+            rendered_as_text=True,
+            evidence=FLAGS[7],
+            message='HTML-like input detected. The browser interpretation question is the important part.',
+            lesson='In a vulnerable renderer, untrusted HTML could reach an executable browser context.'
+        )
+    return jsonify(
+        stored=text,
+        rendered_as_text=True,
+        lesson='Training mode keeps the submission safe. Try harmless HTML and observe what the application reports.'
+    )
+
+
+@app.route('/lab/mission8/session-check')
+@need
+def m8():
+    authenticated='uid' in session
+
+    if authenticated:
+        return jsonify(
+            authenticated=True,
+            identity='detective',
+            session_present=True,
+            message='ByteBop recognizes you without asking for your password again.',
+            clue='Something is connecting this request to your authenticated identity.',
+            lesson='HTTP requests are independent. Applications use session state to associate requests with an authenticated user.'
+        )
+
+    return jsonify(
+        authenticated=False,
+        identity=None,
+        session_present=False,
+        message='ByteBop no longer recognizes this session.',
+        clue='The authenticated session is no longer active.',
+        lesson='Logging out ends the authenticated session.'
+    )
+
 
 @app.route('/lab/mission9/pizza',methods=['POST'])
 @need
-def m9(): return jsonify(action='pizza_claim',message='Training request received.',lesson='Now inspect the state-changing request and ask what proves the user intended it. That is the CSRF question.')
+def m9():
+    data=request.get_json(silent=True) or request.form
+    source=data.get('source','')
+    token=data.get('csrf_token','')
 
-@app.route('/ops-room-7c4f',methods=['GET','POST'])
+    if source=='legitimate' and token:
+        return jsonify(
+            success=True,
+            claimed=False,
+            protected=True,
+            message='Legitimate request received with an intent token.',
+            request_type='protected'
+        )
+
+    if source=='promotion':
+        return jsonify(
+            success=True,
+            claimed=True,
+            protected=False,
+            warning='The state-changing request was accepted without an intent token.',
+            evidence=FLAGS[9],
+            request_type='unprotected',
+            lesson='CSRF defenses help distinguish an intentional state-changing request from an unwanted state-changing request.'
+        )
+
+    return jsonify(
+        success=True,
+        claimed=False,
+        protected=False,
+        message='Training request received.',
+        clue='Compare this request with a legitimate state-changing request.'
+    )
+
+@app.route('/lab/mission10/check', methods=['POST'])
+@need
+def m10():
+    data = request.get_json(silent=True) or {}
+
+    username = str(data.get('username', 'detective')).strip()
+    mode = str(data.get('mode', 'quiet')).strip().lower()
+
+    if mode == 'verbose':
+        return jsonify(
+            status='diagnostic',
+            username=username,
+            mode='verbose',
+            message='Verbose diagnostics enabled.',
+            evidence=FLAGS[10],
+            lesson='Burp Suite can intercept, inspect, modify and forward HTTP requests.'
+        )
+
+    return jsonify(
+        status='normal',
+        username=username,
+        mode='quiet',
+        message='Diagnostic completed. Nothing unusual detected.'
+    )
+@app.route('/ops-room-7c4f', methods=['GET','POST'])
 def admin_login():
     if request.method=='POST':
         un=request.form.get('username',''); pw=request.form.get('password','')

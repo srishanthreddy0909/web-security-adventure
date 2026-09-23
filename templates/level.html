@@ -1,5 +1,55 @@
-{% extends 'base.html' %}{% block content %}<section class="levelhero"><div><span class="badge">MISSION {{'%02d'%n}}</span><h1>{{d[4]}} {{d[1]}}</h1><p class="lead">{{d[2]}} — {{d[3]}}</p></div><div class="missionpoints">{{d[5]}}<small>XP</small></div></section><div class="playgrid"><section class="gamepanel"><div class="speech">{% if n==1 %}<b>Boss:</b> “I sent a support request. If anyone inspects the response, I will deny everything.”{% elif n==2 %}<b>Intern:</b> “I baked a cookie. It has a job. Please do not ask what the job is.”{% elif n==3 %}<b>Login Bot:</b> “I know your password. I still don't know what you're allowed to access.”{% elif n==4 %}<b>Locker Guard:</b> “There are two lockers. Your badge says one. The server says… interesting.”{% elif n==5 %}<b>Security Bingo:</b> “You've seen several weird behaviors. Put names on the chaos.”{% elif n==6 %}<b>Database:</b> “Please search normally. I have feelings.”{% elif n==7 %}<b>Comment Wall:</b> “Say something nice. Please don't make the browser do backflips.”{% elif n==8 %}<b>Session Manager:</b> “I remember you. Maybe longer than I should.”{% elif n==9 %}<b>Pizza Bot:</b> “FREE PIZZA! Terms and conditions: there are no terms and conditions.”{% else %}<b>Request Detective:</b> “Every request tells a story. Intercept it before you rewrite it.”{% endif %}</div><div class="toolrow"><button type="button" data-open="lesson">🧠 Learn</button><button type="button" data-open="hint">💡 Hint</button><button type="button" data-open="recap">🔁 Recap</button></div><div id="lesson" class="drawer hidden"><h3>🧠 Tiny lesson</h3>{% for x in lesson %}<p>• {{x}}</p>{% endfor %}</div><div id="hint" class="drawer hidden"><h3>💡 Detective hint</h3><p id="hintText">Press the button below when you're stuck.</p><button type="button" id="nextHint">Give me a hint</button></div><div id="recap" class="drawer hidden"><h3>🔁 Quick recap</h3><p><b>Explore → Inspect → Try one small change → Explain what happened → Collect the flag.</b></p><p>Before moving on, try explaining today's concept to a teammate in one sentence.</p></div>
-{% if n==1 %}<div class="demo"><h2>📨 Send the suspicious request</h2><p>Click it. Then open DevTools → Network. Select the request and read the Response.</p><button type="button" id="send1">SEND REQUEST</button><pre id="output">Waiting for your click…</pre></div>{% elif n==2 %}<div class="demo"><h2>🍪 Cookie machine</h2><p>Ask the site for a training cookie, then inspect Application/Storage → Cookies.</p><button type="button" id="bake">BAKE MY COOKIE</button><pre id="output">Cookie jar is empty.</pre></div>{% elif n==3 %}<div class="demo"><h2>🪪 Login lab</h2><p>Submit the harmless training login and watch the Network tab.</p><form id="loginlab"><input value="detective" readonly><input value="training-pass" type="password" readonly><button>TRY LOGIN</button></form><pre id="output">No login attempt yet.</pre></div>{% elif n==4 %}<div class="demo"><h2>🚪 Two scenario lockers</h2><p>Start with 101. There are exactly two fictional records in this lesson.</p><div class="buttonrow"><button type="button" class="locker" data-id="101">OPEN 101</button><button type="button" class="locker" data-id="202">OPEN 202</button></div><pre id="output">Choose a locker.</pre></div>{% elif n==5 %}<div class="demo"><h2>🎯 Security Bingo</h2><div class="bingo">{% for x in ['Broken Access Control','Injection','XSS','Authentication Failures','Security Misconfiguration','CSRF'] %}<button type="button">{{x}}</button>{% endfor %}</div><p id="bingoResult" class="muted">Click a square to see a one-line explanation.</p></div>{% elif n==6 %}<div class="demo"><h2>🗃️ Search desk</h2><p>Try a normal search first. Then experiment with input that makes you wonder whether the database is treating text as syntax.</p><form id="searchlab"><input id="q" placeholder="Search for: coffee"><button>SEARCH</button></form><pre id="output">No search yet.</pre></div>{% elif n==7 %}<div class="demo"><h2>💬 Comment wall</h2><form id="commentlab"><input id="comment" placeholder="Write a comment"><button>POST</button></form><pre id="output">The wall is listening…</pre></div>{% elif n==8 %}<div class="demo"><h2>🎟️ Session check</h2><p>Inspect your session cookie. Then log out and revisit the dashboard.</p><a class="button" href="{{url_for('logout')}}">LOG OUT & TEST</a><pre id="output">Your session is currently active.</pre></div>{% elif n==9 %}<div class="demo pizza"><h2>🍕 Definitely Real Pizza</h2><button type="button" id="pizza">CLAIM FREE PIZZA</button><pre id="output">Your pizza is suspiciously free.</pre></div>{% else %}<div class="demo"><h2>🕵️ Final request lab</h2><p>Open Burp Suite in an authorized local setup. Intercept a normal request, read it carefully, then make one harmless change and compare the response.</p><pre id="output">GET /dashboard HTTP/1.1
+{% extends 'base.html' %}{% block content %}<section class="levelhero"><div><span class="badge">MISSION {{'%02d'%n}}</span><h1>{{d[4]}} {{d[1]}}</h1><p class="lead">{{d[2]}} — {{d[3]}}</p></div><div class="missionpoints">{{d[5]}}<small>XP</small></div></section><div class="playgrid"><section class="gamepanel"><div class="speech">{% if n==1 %}<b>Boss:</b> “I sent a support request. If anyone inspects the response, I will deny everything.”{% elif n==2 %}<b>Intern:</b> “I baked a cookie. It has a job. Please do not ask what the job is.”{% elif n==3 %}<b>Login Bot:</b> “I know your password. I still don't know what you're allowed to access.”{% elif n==4 %}<b>Locker Guard:</b> “There are two lockers. Your badge says one. The server says… interesting.”{% elif n==5 %}<div class="demo"><h2>🎯 Security Bingo</h2><p>Remember the locker investigation from the previous room. Which category best describes what happened?</p><div class="bingo">{% for x in ['Broken Access Control','Injection','XSS','Authentication Failures','Security Misconfiguration','CSRF'] %}<button type="button" class="bingoBtn" data-category="{{x|lower|replace(' ','-')}}"> {{x}} </button>{% endfor %}</div><p id="bingoResult" class="muted">Pick the category that matches the evidence.</p><pre id="output">Waiting for your investigation…</pre></div>”{% elif n==6 %}<b>Database:</b> “Please search normally. I have feelings.”{% elif n==7 %}<b>Comment Wall:</b> “Say something nice. Please don't make the browser do backflips.”{% elif n==8 %}<div class="demo"><h2>🎟️ Session check</h2><p>Inspect your session cookie first. Then run the audit and compare what the application tells you.</p><button type="button" id="sessionAudit">RUN SESSION AUDIT</button> <a class="button" href="{{url_for('logout')}}">LOG OUT & TEST</a><pre id="output">Your session is currently active.</pre></div>”{% elif n==9 %}<b>Pizza Bot:</b> “FREE PIZZA! Terms and conditions: there are no terms and conditions.”{% else %}<b>Request Detective:</b> “Every request tells a story. Intercept it before you rewrite it.”{% endif %}</div><div class="toolrow"><button type="button" data-open="lesson">🧠 Learn</button><button type="button" data-open="hint">💡 Hint</button><button type="button" data-open="recap">🔁 Recap</button></div><div id="lesson" class="drawer hidden"><h3>🧠 Tiny lesson</h3>{% for x in lesson %}<p>• {{x}}</p>{% endfor %}</div><div id="hint" class="drawer hidden"><h3>💡 Detective hint</h3><p id="hintText">Press the button below when you're stuck.</p><button type="button" id="nextHint">Give me a hint</button></div><div id="recap" class="drawer hidden"><h3>🔁 Quick recap</h3><p><b>Explore → Inspect → Try one small change → Explain what happened → Collect the flag.</b></p><p>Before moving on, try explaining today's concept to a teammate in one sentence.</p></div>
+{% if n==1 %}<div class="demo"><h2>📨 Send the suspicious request</h2><p>Click it. Then open DevTools → Network. Select the request and read the Response.</p><button type="button" id="send1">SEND REQUEST</button><pre id="output">Waiting for your click…</pre></div>{% elif n==2 %}<div class="demo"><h2>🍪 Cookie machine</h2><p>Ask the site for a training cookie, then inspect Application/Storage → Cookies.</p><button type="button" id="bake">BAKE MY COOKIE</button><pre id="output">Cookie jar is empty.</pre></div>{% elif n==3 %}<div class="demo"><h2>🪪 Login lab</h2><p>Submit the harmless training login and watch the Network tab.</p><form id="loginlab"><input value="detective" readonly><input value="training-pass" type="password" readonly><button>TRY LOGIN</button></form><div id="answerBox" class="hidden"><p><b>Detective question:</b> What does authentication establish?</p><input id="authAnswer" placeholder="Your answer"><button type="button" id="checkAuth">CHECK ANSWER</button></div><pre id="output">No login attempt yet.</pre></div>{% elif n==4 %}<div class="demo"><h2>🚪 Two scenario lockers</h2><p>Start with 101. There are exactly two fictional records in this lesson.</p><div class="buttonrow"><button type="button" class="locker" data-id="101">OPEN 101</button><button type="button" class="locker" data-id="202">OPEN 202</button></div><pre id="output">Choose a locker.</pre></div>{% elif n==5 %}<div class="demo"><h2>🎯 Security Bingo</h2><div class="bingo">{% for x in ['Broken Access Control','Injection','XSS','Authentication Failures','Security Misconfiguration','CSRF'] %}<button type="button">{{x}}</button>{% endfor %}</div><p id="bingoResult" class="muted">Click a square to see a one-line explanation.</p></div>{% elif n==6 %}<div class="demo"><h2>🗃️ Search desk</h2><p>Try a normal search first. Then experiment with input that makes you wonder whether the database is treating text as syntax.</p><form id="searchlab"><input id="q" placeholder="Search for: coffee"><button>SEARCH</button></form><pre id="output">No search yet.</pre></div>{% elif n==7 %}<div class="demo"><h2>💬 Comment wall</h2><form id="commentlab"><input id="comment" placeholder="Write a comment"><button>POST</button></form><pre id="output">The wall is listening…</pre></div>{% elif n==8 %}
+<div class="demo">
+<h2>🪪 Who Am I?</h2>
+<p>ByteBop remembers you even when you make a new request. But how?</p>
+<p>Check your identity first. Then investigate what the browser is sending that allows the server to recognize you.</p>
+<button type="button" id="sessionAudit">CHECK MY IDENTITY</button>
+<a class="button" href="{{url_for('logout')}}">LOG OUT</a>
+<pre id="output">Waiting for the identity check...</pre>
+<div id="sessionQuestion" style="display:none;">
+<p><strong>INVESTIGATION</strong></p>
+<p>What connects your separate HTTP requests to the same authenticated session?</p>
+<button class="sessionAnswer" data-answer="screen">The browser screen</button>
+<button class="sessionAnswer" data-answer="session">Session state</button>
+<button class="sessionAnswer" data-answer="wifi">The Wi-Fi connection</button>
+<button class="sessionAnswer" data-answer="url">The page URL</button>
+</div>
+</div>
+
+{% elif n==9 %}
+<div class="demo">
+<h2>🍕 I Didn't Click That</h2>
+<p>Someone just claimed the last ByteBop pizza voucher using your account.</p>
+<p>The strange part? <strong>You don't remember intentionally claiming it.</strong></p>
+<p>Compare a legitimate request with the suspicious promotion request. Don't trust the page. Investigate the network traffic.</p>
+<button type="button" id="legitimateRequest">CHECK LEGITIMATE REQUEST</button>
+<button type="button" id="promotionRequest">OPEN FREE PIZZA PROMOTION</button>
+<pre id="output">Nothing has happened yet.</pre>
+<div id="csrfQuestion" style="display:none;">
+<p><strong>INVESTIGATION</strong></p>
+<p>Compare the two requests in DevTools → Network. What important protection is missing from the suspicious request?</p>
+<button class="csrfAnswer" data-answer="cookie">Cookie</button>
+<button class="csrfAnswer" data-answer="token">CSRF token</button>
+<button class="csrfAnswer" data-answer="useragent">User-Agent</button>
+<button class="csrfAnswer" data-answer="content">Content-Type</button>
+</div>
+</div>
+
+{% elif n==10 %}
+<div class="demo">
+<h2>🕵️ Intercepted & Confused</h2>
+<p>The ByteBop diagnostic terminal says everything is normal.</p>
+<p>But the server is receiving information that the page never explicitly showed you.</p>
+<p>Find out what the server is actually receiving.</p>
+<button type="button" id="finalCheck">RUN DIAGNOSTIC</button>
+<pre id="output">Waiting for the diagnostic request...</pre>
+<div id="burpQuestion" style="display:none;">
+<p><strong>FINAL INVESTIGATION</strong></p>
+<p>The request contains a value that the server uses to change its behaviour.</p>
+<p>Intercept the request and determine what happens when that value is changed.</p>
+</div>
+</div>
 Host: 127.0.0.1:5000
 Cookie: session=••••••
 Accept: text/html</pre></div>{% endif %}</section><aside class="side"><div class="sidecard"><h3>🎒 Your objective</h3><ul><li>Find the evidence</li><li>Understand the concept</li><li>Do the tiny experiment</li><li>Submit the funny flag</li></ul></div><div class="sidecard flagbox"><h3>🏁 Flag found?</h3><form id="flagform"><input id="flag" placeholder="CT{...}" autocomplete="off"><button>SUBMIT FLAG</button></form><div id="flagmsg" aria-live="polite"></div></div></aside></div><script>
@@ -8,11 +58,154 @@ document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>document.getEl
 const h=document.getElementById('nextHint');if(h)h.onclick=async()=>{const r=await fetch('{{url_for("hint",n=n)}}',{method:'POST'});const x=await r.json();document.getElementById('hintText').textContent='Hint #'+x.number+': '+x.hint};
 const s=document.getElementById('send1');if(s)s.onclick=async()=>{const r=await fetch('{{url_for("m1")}}',{method:'POST'});show(await r.json())};
 const b=document.getElementById('bake');if(b)b.onclick=async()=>{const r=await fetch('{{url_for("m2")}}');show(await r.json())};
-const lf=document.getElementById('loginlab');if(lf)lf.onsubmit=async e=>{e.preventDefault();const inputs=lf.querySelectorAll('input');const r=await fetch('{{url_for("m3")}}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:inputs[0].value,password:inputs[1].value})});show(await r.json())};
+const lf=document.getElementById('loginlab');
+if(lf)lf.onsubmit=async e=>{
+    e.preventDefault();
+    const inputs=lf.querySelectorAll('input');
+    const r=await fetch('/lab/mission3/login',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+            username:inputs[0].value,
+            password:inputs[1].value
+        })
+    });
+    const x=await r.json();
+    show(x);
+    if(x.success){
+        const box=document.getElementById('answerBox');
+        if(box)box.classList.remove('hidden');
+    }
+};
+
+const checkAuth=document.getElementById('checkAuth');
+if(checkAuth)checkAuth.onclick=async()=>{
+    const answer=document.getElementById('authAnswer').value;
+    const r=await fetch('/lab/mission3/answer',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({answer:answer})
+    });
+    show(await r.json());
+};
 document.querySelectorAll('.locker').forEach(b=>b.onclick=async()=>{const r=await fetch('/lab/mission4/locker/'+b.dataset.id);show(await r.json())});
 const sf=document.getElementById('searchlab');if(sf)sf.onsubmit=async e=>{e.preventDefault();const r=await fetch('/lab/mission6/search?q='+encodeURIComponent(document.getElementById('q').value));show(await r.json())};
 const cf=document.getElementById('commentlab');if(cf)cf.onsubmit=async e=>{e.preventDefault();const r=await fetch('{{url_for("m7")}}',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'text='+encodeURIComponent(document.getElementById('comment').value)});show(await r.json())};
-const pizza=document.getElementById('pizza');if(pizza)pizza.onclick=async()=>{const r=await fetch('{{url_for("m9")}}',{method:'POST'});show(await r.json())};
-document.querySelectorAll('.bingo button').forEach(btn=>btn.onclick=()=>{const map={'Broken Access Control':'Who can access what?','Injection':'Can input change how an interpreter behaves?','XSS':'Can untrusted content become browser code?','Authentication Failures':'Can the app reliably establish identity?','Security Misconfiguration':'Are security controls configured safely?','CSRF':'What proves a state-changing request was intentional?'};document.getElementById('bingoResult').textContent=map[btn.textContent]});
+document.querySelectorAll('.bingoBtn').forEach(btn=>{
+    btn.onclick=async()=>{
+        const category=btn.dataset.category;
+
+        const r=await fetch(
+            '/lab/mission5/bingo/'+encodeURIComponent(category)
+        );
+
+        const x=await r.json();
+
+        document.getElementById('bingoResult').textContent=x.message;
+
+        show(x);
+    };
+});
 document.getElementById('flagform').onsubmit=async e=>{e.preventDefault();const r=await fetch('{{url_for("submit")}}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({level:{{n}},flag:document.getElementById('flag').value})});const x=await r.json();document.getElementById('flagmsg').textContent=x.message+(x.score?' • +'+x.score+' XP':'');if(x.ok&&!x.already)setTimeout(()=>location.href='{{url_for("dashboard")}}',1100)};
+const sessionAudit=document.getElementById('sessionAudit');
+
+if(sessionAudit){
+    sessionAudit.onclick=async function(){
+        const r=await fetch('/lab/mission8/session-check');
+        const x=await r.json();
+        document.getElementById('output').textContent=JSON.stringify(x,null,2);
+
+        if(x.authenticated){
+            document.getElementById('sessionQuestion').style.display='block';
+        }
+    };
+}
+
+document.querySelectorAll('.sessionAnswer').forEach(function(btn){
+    btn.onclick=function(){
+        if(btn.dataset.answer==='session'){
+            document.getElementById('output').textContent=
+                'Correct.\n\nSession state connects separate requests to your authenticated identity.\n\nCT{session_please_behave}';
+        }else{
+            document.getElementById('output').textContent=
+                'Not quite. Think about what the server needs to recognize you across separate requests.';
+        }
+    };
+});
+
+const legitimateRequest=document.getElementById('legitimateRequest');
+
+if(legitimateRequest){
+    legitimateRequest.onclick=async function(){
+        const r=await fetch('/lab/mission9/legitimate',{
+            method:'POST'
+        });
+
+        const x=await r.json();
+
+        document.getElementById('output').textContent=
+            JSON.stringify(x,null,2);
+    };
+}
+
+const promotionRequest=document.getElementById('promotionRequest');
+
+if(promotionRequest){
+    promotionRequest.onclick=async function(){
+        const r=await fetch('/lab/mission9/pizza',{
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json'
+            },
+            body:JSON.stringify({
+                source:'promotion'
+            })
+        });
+
+        const x=await r.json();
+
+        document.getElementById('output').textContent=
+            JSON.stringify(x,null,2);
+
+        document.getElementById('csrfQuestion').style.display='block';
+    };
+}
+
+document.querySelectorAll('.csrfAnswer').forEach(function(btn){
+    btn.onclick=function(){
+        if(btn.dataset.answer==='token'){
+            document.getElementById('output').textContent=
+                'Correct.\n\nThe suspicious request did not contain the protection found in the legitimate request.\n\nCT{i_didnt_click_that}';
+
+            document.getElementById('csrfQuestion').innerHTML=
+                '<p><strong>INVESTIGATION COMPLETE</strong></p>' +
+                '<p>You discovered why applications need protection against unwanted state-changing requests.</p>';
+        }else{
+            document.getElementById('output').textContent=
+                'Not quite. Compare the legitimate and suspicious requests carefully.';
+        }
+    };
+});
+
+const finalCheck=document.getElementById('finalCheck');
+
+if(finalCheck){
+    finalCheck.onclick=async function(){
+        const r=await fetch('/lab/mission10/check',{
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json'
+            },
+            body:JSON.stringify({
+                username:'detective',
+                mode:'quiet'
+            })
+        });
+
+        const x=await r.json();
+
+        document.getElementById('output').textContent=
+            JSON.stringify(x,null,2);
+    };
+}
 </script><!-- SOURCE CLUE: {{ ['Start with the request. The response has the breadcrumb. It is encoded, not encrypted.','The browser stores the clue. Inspect the cookie jar, then decode the value.','Watch the login request. Authentication is about establishing identity.','Compare the two scenario object IDs. Authorization is about whether the requested object is yours.','Use the behavior you saw as evidence, then match it to an OWASP category.','Start with a baseline search. Then test whether input is treated as data or database syntax.','The browser interprets HTML. Your question: what happens when untrusted content reaches an HTML context?','A session needs protection and a sensible lifetime. Inspect, logout, and compare.','Find the state-changing request. Ask what proves that the user intended it.','Intercept one ordinary request. Read it like a detective before changing anything.'][n-1] }} --></script>{% endblock %}
