@@ -246,10 +246,15 @@ def m2():
     resp.set_cookie('training_cookie',encoded,httponly=False,secure=request.is_secure,samesite='Lax')
     return resp
 
-@app.route('/lab/mission3/login',methods=['POST'])
+@app.route('/lab/mission3/login', methods=['POST'])
 @need
-def m3(): return jsonify(success=True,identity='detective',lesson='Authentication established an identity for this session.')
-
+def m3():
+    return jsonify(
+        success=True,
+        identity='detective',
+        lesson='Authentication established an identity for this session.',
+        clue='Identity confirmed. Now ask: what proves who you are?'
+    )
 @app.route('/lab/mission4/locker/<int:object_id>')
 @need
 def m4(object_id):
